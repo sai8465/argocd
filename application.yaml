@@ -1,20 +1,24 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
-   name: nginx-argo
-   namespace: argocd
+  name: argocd
 spec:
-   project: default
-   source:
-      repoURL: https://github.com/sai8465/argocd.git
-      targetRevision: HEAD
-      path: yaml
-   destination:
-      server: https://kubernetes.default.svc
-      namespace: myapp
-   syncPolicy:
-     syncOptions:
-     - CreateNamespace=true
-     automated:
-       selfHeal: true
-       prune: true
+  generators:
+  - list:
+      elements:
+      - cluster: in-cluster
+        url: https://kubernetes.default.svc
+     - cluster: dev
+       url: https://vc-wrwzlziplnm04coih3zf.apps.aws-mumbai-eks.klusternetes.com
+  template:
+    metadata:
+      name: '{{cluster}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/sai8465/argocd.git
+        targetRevision: HEAD
+        path: yaml{{cluster}}
+      destination:
+        server: '{{url}}'
+        namespace: default
